@@ -1,0 +1,275 @@
+{
+	"projects":
+	{
+		"Glibc":
+		{
+			"short_name": "glibc",
+			"database_id": 5,
+			"database_name": "glibc",
+			"github_data_name": "glibc",
+			"vendor_id": [72],
+			"product_id": [767],
+			"url_pattern": "sourceware",
+			"master_branch": "master",
+			"language": "c",
+			"include_directory_path": "include"
+		},
+
+		"Apache HTTP Server":
+		{
+			"short_name": "apache",
+			"database_id": 4,
+			"database_name": "httpd",
+			"github_data_name": "httpd",
+			"vendor_id": [45],
+			"product_id": [66],
+			"url_pattern": "apache",
+			"master_branch": "trunk",
+			"language": "c",
+			"include_directory_path": "include"
+		},
+
+		"Xen":
+		{
+			"short_name": "xen",
+			"database_id": 3,
+			"database_name": "xen",
+			"github_data_name": "xen",
+			"vendor_id": [6276],
+			"product_id": [null],
+			"url_pattern": "xen",
+			"master_branch": "master",
+			"language": "c",
+			"include_directory_path": "xen/include"
+		},
+
+		"Linux Kernel":
+		{
+			"short_name": "kernel",
+			"database_id": 2,
+			"database_name": "kernel",
+			"github_data_name": "linux",
+			"vendor_id": [33],
+			"product_id": [47],
+			"url_pattern": "linux|kernel|redhat",
+			"master_branch": "master",
+			"language": "c",
+			"include_directory_path": "include"
+		},
+
+		"Mozilla":
+		{
+			"short_name": "mozilla",
+			"database_id": 1,
+			"database_name": "mozilla",
+			"github_data_name": "mozilla",
+			"vendor_id": [452],
+			"product_id": [null],
+			"url_pattern": "mozilla",
+			"master_branch": "master",
+			"language": "c++",
+			"include_directory_path": null
+		},
+
+		"MongoDB":
+		{
+			"short_name": "mongodb",
+			"database_id": 8,
+			"database_name": "mongodb",
+			"github_data_name": "mongo",
+			"vendor_id": [12752],
+			"product_id": [null],
+			"url_pattern": "mongodb",
+			"master_branch": "master",
+			"language": "c++",
+			"include_directory_path": null
+		},
+
+		"MySQL":
+		{
+			"short_name": "mysql",
+			"database_id": 9,
+			"database_name": "mysql",
+			"github_data_name": "mysql-server",
+			"vendor_id": [185, 93, 93],
+			"product_id": [null, 21801, 77661],
+			"url_pattern": "mysql|oracle",
+			"master_branch": "trunk",
+			"language": "c++",
+			"include_directory_path": null
+		},
+
+		"PostgreSQL":
+		{
+			"short_name": "postgresql",
+			"database_id": 10,
+			"database_name": "postgresql",
+			"github_data_name": "postgres",
+			"vendor_id": [336],
+			"product_id": [null],
+			"url_pattern": "postgresql",
+			"master_branch": "master",
+			"language": "c",
+			"include_directory_path": null
+		},
+
+		"Elastic":
+		{
+			"short_name": "elastic",
+			"database_id": 11,
+			"database_name": "elastic",
+			"github_data_name": "elasticsearch",
+			"vendor_id": [16559, 13554],
+			"product_id": [51138, 28218],
+			"url_pattern": "elastic",
+			"master_branch": "main",
+			"language": "java",
+			"include_directory_path": null
+		},
+
+		"Redis":
+		{
+			"short_name": "redis",
+			"database_id": 12,
+			"database_name": "redis",
+			"github_data_name": "redis",
+			"vendor_id": [18560, 25596],
+			"product_id": [47087, 101460],
+			"url_pattern": "redis",
+			"master_branch": "unstable",
+			"language": "c",
+			"include_directory_path": null
+		},
+
+		"Apache Cassandra":
+		{
+			"short_name": "apache_cassandra",
+			"database_id": 13,
+			"database_name": "apache_cassandra",
+			"github_data_name": "cassandra",
+			"vendor_id": [45],
+			"product_id": [31429],
+			"url_pattern": "apache",
+			"master_branch": "trunk",
+			"language": "java",
+			"include_directory_path": null
+		},
+
+		"SQLite":
+		{
+			"short_name": "sqlite",
+			"database_id": 14,
+			"database_name": "sqlite",
+			"github_data_name": "sqlite",
+			"vendor_id": [9237],
+			"product_id": [16355],
+			"url_pattern": "sqlite",
+			"master_branch": "master",
+			"language": "c",
+			"include_directory_path": null
+		},
+
+		"Neo4j":
+		{
+			"short_name": "neo4j",
+			"database_id": 15,
+			"database_name": "neo4j",
+			"github_data_name": "neo4j",
+			"vendor_id": [13275, 13275],
+			"product_id": [27539, 98765],
+			"url_pattern": "neo4j",
+			"master_branch": "5.13",
+			"language": "java",
+			"include_directory_path": null
+		}
+	},
+
+	"sats":
+	{
+		"Understand":
+		{
+			"database_name": null,
+			"github_data_name": null
+		},
+
+		"Cppcheck":
+		{
+			"database_name": "Cppcheck",
+			"github_data_name": "cppcheck"
+		},
+
+		"Flawfinder":
+		{
+			"database_name": "Flawfinder",
+			"github_data_name": "flawfinder"
+		}
+	},
+
+	"vulnerability_categories":
+	{
+		"Memory Management": 			[119, 362, 399, 416, 476, 824],
+		"Input Validation": 			[20, 78, 79, 91, 94, 134, 189],
+		"Permission": 					[255, 264, 269, 284, 287, 352],
+		"Data Protection": 				[199, 200],
+		"Coding Practices": 			[17, 19, 254],
+		"Cryptography": 				[310],
+		"System Configuration": 		[16],
+		"File Management": 				[22, 59],
+		
+		"Output Encoding": 				[],
+		"Error Handling and Logging": 	[],
+		"Communication Security": 		[],
+		"Database Security": 			[]
+	},
+
+	"target_labels": ["binary_label", "grouped_multiclass_label"],
+
+	"http_headers":
+	{
+		"Chrome":
+		{
+			"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+			"Accept-Encoding": "identity",
+			"Accept-Language": "en-US,en;q=0.9",
+			"Sec-Fetch-Dest": "document",
+			"Sec-Fetch-Mode": "navigate",
+			"Sec-Fetch-Site": "none",
+			"Sec-Fetch-User": "?1",
+			"Upgrade-Insecure-Requests": "1",
+			"User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
+		},
+
+		"Firefox":
+		{
+			"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+			"Accept-Encoding": "identity",
+			"Accept-Language": "en-US,en;q=0.5",
+			"Dnt": "1",
+			"Referer": "https://duckduckgo.com/?q=test&t=h_&ia=web",
+			"Sec-Gpc": "1",
+			"Upgrade-Insecure-Requests": "1",
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0"
+		},
+
+		"Edge":
+		{
+			"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+			"Accept-Encoding": "identity",
+			"Accept-Language": "en-US,en;q=0.9",
+			"Sec-Fetch-Dest": "document",
+			"Sec-Fetch-Mode": "navigate",
+			"Sec-Fetch-Site": "none",
+			"Sec-Fetch-User": "?1",
+			"Upgrade-Insecure-Requests": "1",
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36 Edg/88.0.705.74"
+		},
+
+		"Internet Explorer":
+		{
+			"Accept": "text/html, application/xhtml+xml, image/jxr, */*",
+			"Accept-Encoding": "identity",
+			"Accept-Language": "en-US",
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko"
+		}
+	}
+}
