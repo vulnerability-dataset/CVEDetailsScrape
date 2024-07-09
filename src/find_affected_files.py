@@ -62,6 +62,10 @@ def main(project_to_analizys: str):
 			log.info(f'Finding affected files for the project "{project}" using the information in "{input_csv_path}".')
 			
 			cves = pd.read_csv(input_csv_path, usecols=['CVE', 'Git Commit Hashes'], dtype=str)
+			if cves.empty:
+				log.info(f'Nothing to do in "{input_csv_path}".')
+				continue
+
 			cves = cves.dropna()
 	
 			cves['Git Commit Hashes'] = cves['Git Commit Hashes'].map(deserialize_json_container)

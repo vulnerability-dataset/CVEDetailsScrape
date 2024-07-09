@@ -314,10 +314,9 @@ def calculate_cvss_rating(values: str) -> list:
     """
     cvss_ratings = list()
     values = values.strip('"[]').replace("'", "").replace(" ", "").split(',')
+
     for num in values:
-        if len(num) == 0:
-            return []
-        else:
+        try:
             cvss = float(num)
             if 9.0 <= cvss <= 10.0:
                 cvss_ratings.append('Critical')
@@ -332,11 +331,17 @@ def calculate_cvss_rating(values: str) -> list:
             else:
                 log.warning(f'Could not map the CVSS "{cvss}" to a valid CVSS v3.0 rating.')
                 cvss_ratings.append('None')    
+        except Exception:
+            continue    
+            
     return cvss_ratings
 
 def string_values_to_list_values(values: str) -> list:
     """Given a string with values, returns a list with the correspond value in integer type.
     """
+    if values is None:
+        return []
+    
     lista_values = list()
     values = values.strip('"[]').replace("'", "").replace(" ", "").split(',')
     for num in values:

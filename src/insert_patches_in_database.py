@@ -95,14 +95,15 @@ def main(project_to_analizys: str):
 			else:
 				log.error(f'Failed to find the next commit ID for the project "{project}" with the error code {error_code}.')
 				continue
-
-			input_csv_path, output = project.find_last_diff_cves(project.output_directory_diff_path, project, INPUT, OUTPUT)
-
-			if output == None:
-				continue
+			
+			input_csv_path = project.find_affected_file_from_diff_directory()
 
 			log.info(f'Inserting the patches for the project "{project}" using the information in "{input_csv_path}".')
 
+			if input_csv_path is None:
+				log.info(f'No file with affected products.')
+				continue
+   
 			# We only want the neutral commits since the vulnerable ones are identified relative to neutral commits
 			# by using the Occurrence column in the metrics table (vulnerable = before neutral).
 			commits = pd.read_csv(input_csv_path, usecols=['Topological Index', 'Neutral Commit Hash', 'Neutral Tag Name', 'Neutral Author Date', 'CVEs'], dtype=str)

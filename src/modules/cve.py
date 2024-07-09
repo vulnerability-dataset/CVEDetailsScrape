@@ -242,15 +242,16 @@ class Cve:
 		</ul>
 		"""
 
-		# Vamos buscar a tabela toda
+		# Find the table of scores
 		scores_atributes = self.cve_details_soup.find('table', class_='table table-borderless')
 		cve_attributes = {}
 
 		if scores_atributes is not None:
 
-			# Iteramos agora por cada linha da tabela
+			# We search for all "tr", that means all table entries 
 			attributes_lines = scores_atributes.find_all('tr')
-			
+   
+			# We jump the first and iterate 2-2 because in the fisrt we have th information of everything and in the second the detailed vector
 			for i in range(1, len(attributes_lines), 2):
 				help_attributes = attributes_lines[i]
 				help_attributes_open_vector = attributes_lines[i+1]
@@ -467,6 +468,33 @@ class Cve:
 		"""
 			Various helper methods to handle specific URLs from different sources.
 		"""
+  
+		def handle_django_urls(url: str) -> Optional[str]:
+			if url is not None:
+				response = Cve.CVE_DETAILS_SCRAPING_MANAGER.download_page(url)
+				texto = bs4.BeautifulSoup(response.text, 'html.parser')
+				text_block = texto.find_all(class_="simple")
+				if len(text_block) > 1:
+					text_block = text_block[1]
+				else:
+					return
+				git_url = text_block.find_all('a', href=True)
+				if len(git_url) > 0:
+					git_url = git_url[0]['href']
+				else:
+					print(url)
+					return
+				split_url = urlsplit(git_url)
+				path_components = split_url.path.rsplit('/')
+				commit_hash = path_components[-1]
+     
+				if commit_hash is not None and not ScrapingRegex.GIT_COMMIT_HASH.match(commit_hash):
+					commit_hash = None
+			
+				if commit_hash is None:
+					log.error(f'--> Could not find a valid commit hash in "{url}".')
+				
+				return commit_hash
 
 		def handle_bugzilla_urls(url: str) -> Optional[str]:
 			id = get_query_param(url, ['id', 'bug_id'])
@@ -545,6 +573,9 @@ class Cve:
 		self.advisory_urls, self.advisory_ids 		= list_all_urls([ScrapingRegex.MFSA_URL, ScrapingRegex.XSA_URL, ScrapingRegex.APACHE_SECURITY_URL], handle_advisory_urls)
 
 		self.git_urls, self.git_commit_hashes 		= list_all_urls([ScrapingRegex.GIT_URL, ScrapingRegex.GITHUB_URL], handle_git_urls)
+		help_git_urls, help_git_commit_hashes 		= list_all_urls(ScrapingRegex.DJANGO_GIT, handle_django_urls)
+		self.git_urls += help_git_urls
+		self.git_commit_hashes += help_git_commit_hashes
 		self.svn_urls, self.svn_revision_numbers 	= list_all_urls(ScrapingRegex.SVN_URL, handle_svn_urls)
 
 	def remove_duplicated_values(self):

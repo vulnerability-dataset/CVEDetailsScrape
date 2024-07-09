@@ -52,7 +52,7 @@ class Sat():
 			return (False, '')
 
 		arguments = [self.executable_path] + [arg for arg in args]
-		result = subprocess.run(arguments, capture_output=True, text=True)
+		result = subprocess.run(arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 		success = (result.returncode == 0)
 
 		if not success:
@@ -69,7 +69,7 @@ class Sat():
 
 		result = None
 
-		try:
+		try:			
 			_, temporary_file_path = tempfile.mkstemp()
 
 			with open(temporary_file_path, 'w') as temporary_file:
@@ -164,9 +164,8 @@ class UnderstandSat(Sat):
 		temporary_file_path = Sat.write_list_to_temporary_file(file_path_list)
 
 		if temporary_file_path:
-
 			success, _ = self.run	(
-										'-quiet', '-db', database_path,
+										'-quiet', "-verbose", '-db', database_path,
 										'create', '-languages', 'c++', # This value cannot be self.project.language since only "c++" is accepted.
 										'settings', '-metrics', 'all',
 													'-metricsWriteColumnTitles', 'on',
@@ -180,7 +179,6 @@ class UnderstandSat(Sat):
 										'analyze',
 										'metrics'
 									)
-
 			delete_file(temporary_file_path)
 
 		# Safeguard against the tool executing successfully without having created the CSV file.

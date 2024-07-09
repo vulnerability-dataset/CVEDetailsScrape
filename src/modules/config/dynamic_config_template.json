@@ -28,11 +28,12 @@
 		"redis": true,
 		"apache_cassandra": true,
 		"sqlite": true,
-		"neo4j": true
+		"neo4j": true,
+		"django": true
 	},
 	
-	"output_directory_path": "where the output is",
-	"output_directory_diff_path": "where the diff output is",
+	"output_directory_path": "/media/sda1/Projeto_Vulnerabilidades/VulnerabilidadesWork/output/",
+	"output_directory_diff_path": "/media/sda1/Projeto_Vulnerabilidades/VulnerabilidadesWork/output/diff_between_files",
 	"start_at_cve_hub_page": null,
 	"scrape_all_branches": false,
 
@@ -182,67 +183,72 @@
 	{
 		"Glibc":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/glibc/"
 		},
 
 		"Apache HTTP Server":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/httpd/"
 		},
 
 		"Xen":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/xen/"
 		},
 
 		"Linux Kernel":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/linux/"
 		},
 
 		"Mozilla":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/gecko-dev/"
 		},
 
 		"MongoDB":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/mongo/"
 		},
 
 		"MySQL":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/mysql-server/"
 		},
 
 		"PostgreSQL":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/postgres/"
 		},
 
 		"Elastic":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/elasticsearch/"
 		},
 
 		"Redis":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/redis/"
 		},
 
 		"Apache Cassandra":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/cassandra/"
 		},
 
 		"SQLite":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/sqlite/"
 		},
 
 		"Neo4j":
 		{
-			"repository_path": "path"
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/neo4j/"
+		},
+
+		"Djangoproject":
+		{
+			"repository_path": "/media/sda1/Projeto_Vulnerabilidades/Repositorios/django/"
 		}
 	},
 
@@ -250,7 +256,7 @@
 	{
 		"Understand":
 		{
-			"executable_path": "<Replace with path>"
+			"executable_path": "/media/sda1/scitools/bin/linux64/und"
 		},
 
 		"Cppcheck":
@@ -269,7 +275,7 @@
 		"host": "127.0.0.1",
 		"port": "3306",
 		"user": "root",
-		"password": "password",
-		"database": "database"
+		"password": "kubernetes",
+		"database": "sw_vulnerability_db"
 	}
 }

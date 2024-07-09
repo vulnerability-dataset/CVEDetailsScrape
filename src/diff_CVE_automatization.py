@@ -6,15 +6,36 @@
     This script uses the CSV files generated after running "collect_vulnerabilities.py" to creates its own CSVs.
 """
 
+from datetime import datetime
 import os
 import csv
 import sys
 import pandas as pd
-from datetime import date
 from typing import Tuple
 
 from modules.common import log
 from modules.project import Project
+from modules.database import Database
+
+def verify_content(path: str, path_old: str) -> bool:
+    '''
+        If check is the file is empty.
+        In this cases we have to check if the previous one is not empty too.
+        We delete the empty file is the oldest have information.
+        
+        Params:
+            path (str): path to the file
+            path_old (str): path to the old file
+        Returns:
+            bool: true if the file is not empty
+    '''
+    content = pd.read_csv(path)
+    if content.empty:
+        content = pd.read_csv(path_old)
+        if content.empty:
+            os.remove(path)
+            return False
+    return True
 
 def find_paths(proj_path: str) -> Tuple[str, str]:
     ''' 
@@ -55,17 +76,21 @@ def find_paths(proj_path: str) -> Tuple[str, str]:
             elif time < paths_to_return[0][1]:
                 paths_to_return.remove(paths_to_return[0])
                 paths_to_return.insert(0, [file_path, os.stat(file_path).st_mtime])
-       
+    
     if len(paths_to_return) == 0:
         return None, None
-    if len(paths_to_return) == 1:
+    elif len(paths_to_return) == 1:
         return paths_to_return[0][0], ""
+    else:
+        # We see if the recent are not empty, if is empty we return 2 equal file to complete an equal diff file
+        if not verify_content(paths_to_return[0][0], paths_to_return[1][0]):
+            return paths_to_return[1][0], paths_to_return[1][0]
+              
+        # We update the name of the file to remove "__" if both files are valid
+        renamed_path = paths_to_return[1][0][:-6] + '.csv'
+        os.rename(paths_to_return[1][0], renamed_path)
             
-    # We update the name of the file to remove "__"
-    renamed_path = paths_to_return[1][0][:-6] + '.csv'
-    os.rename(paths_to_return[1][0], renamed_path)
-        
-    return paths_to_return[0][0], renamed_path
+        return paths_to_return[0][0], renamed_path
 
 def read_file(path: str) -> pd.DataFrame:
     '''
@@ -242,61 +267,68 @@ def main(project_to_analizys: str) -> None:
         'WhatChanged'
 	]
     
-    today_date = date.today()
     project_list = Project.get_project_list_from_config()
     
-    # We iterate for all projects and test if we want to work with each one
-    for proj in project_list:
-        
-        if proj.short_name == project_to_analizys:
-            pass
-        elif project_to_analizys == "":
-            if proj.short_name != 'mozilla' and proj.short_name != 'kernel':
+    date: str = datetime.now().strftime('%Y-%m-%d')
+    
+    with Database(buffered=True) as db:
+    
+        # We iterate for all projects and test if we want to work with each one
+        for proj in project_list:
+            
+            if proj.short_name == project_to_analizys:
                 pass
+            elif project_to_analizys == "":
+                if proj.short_name != 'mozilla' and proj.short_name != 'kernel':
+                    pass
+                else:
+                    log.info(f'The project {proj.short_name} will be skiped.')
+                    continue
             else:
                 log.info(f'The project {proj.short_name} will be skiped.')
-                continue
-        else:
-            log.info(f'The project {proj.short_name} will be skiped.')
-            continue 
-        
-        log.info(f'Initialize the diff to the project {proj.short_name}')
-        
-        # Directories needed
-        input_directory = proj.output_directory_path
-        output_diretory = os.path.join(proj.output_directory_diff_path, f'{proj.short_name}_{today_date}')
-        
-        # Finding the paths to the files
-        path_recent_file, path_old_file = find_paths(input_directory)
-
-        # We need to have at least the recent file 
-        if path_recent_file == None:
-            log.info(f"No files to compare")
-            continue
+                continue 
             
-        log.info(f'Files to compare: old - {path_old_file} new - {path_recent_file}')
-        
-        # Read the files
-        lines_old_file = read_file(path_old_file)
-        lines_recent_file = read_file(path_recent_file)
+            log.info(f'Initialize the diff to the project {proj.short_name}')
+            
+            # Directories needed
+            input_directory = proj.output_directory_path
+            output_diretory = proj.create_diff_subdirectory()       
+            
+            # Finding the paths to the files
+            path_recent_file, path_old_file = find_paths(input_directory)
 
-        # If theres no oldest file we simulate an empty one
-        if lines_old_file is None:
-            lines_old_file = pd.DataFrame(columns = CSV_HEADER)
-        
-        # Find the differences
-        cves_news, cves_equals, cves_missing, cves_updated = find_differences_between_two_cve_files(lines_recent_file, lines_old_file)
-        
-        # Write the files
-        write_file(cves_news, f"{proj.short_name}_novas.csv", output_diretory, CSV_HEADER)
-        write_file(cves_equals, f"{proj.short_name}_iguais.csv", output_diretory, CSV_HEADER)
-        write_file(cves_missing, f"{proj.short_name}_desaparecidas.csv", output_diretory, CSV_HEADER)
-        write_file(cves_updated, f"{proj.short_name}_atualizadas.csv", output_diretory, CSV_HEADER_UPDATED_VULNERABILITIES)
-        
-        log.info(f"Stats from {proj}: {len(cves_updated)} updated vulnerabilities, {len(cves_news)} new vulnerabilities, {len(cves_missing)} deleted vulnerabilities and {len(cves_equals)} equal vulnerabilities.")
-        log.info(f"{proj.short_name} done!")
+            # We need to have at least the recent file 
+            if path_recent_file == None:
+                log.info(f"No files to compare")
+                continue
+                
+            log.info(f'Files to compare: old - {path_old_file} new - {path_recent_file}')
+            
+            # Read the files
+            lines_recent_file = read_file(path_recent_file)
+            # If there is no oldest file we simulate an empty one
+            if lines_old_file is None:
+                lines_old_file = pd.DataFrame(columns = CSV_HEADER)
+            else:
+                lines_old_file = read_file(path_old_file)
+            
+            # Find the differences
+            cves_news, cves_equals, cves_missing, cves_updated = find_differences_between_two_cve_files(lines_recent_file, lines_old_file)
+            
+            # Write the files
+            write_file(cves_news, f"{proj.short_name}_novas.csv", output_diretory, CSV_HEADER)
+            write_file(cves_equals, f"{proj.short_name}_iguais.csv", output_diretory, CSV_HEADER)
+            write_file(cves_missing, f"{proj.short_name}_desaparecidas.csv", output_diretory, CSV_HEADER)
+            write_file(cves_updated, f"{proj.short_name}_atualizadas.csv", output_diretory, CSV_HEADER_UPDATED_VULNERABILITIES)
+            
+            success, _ = db.execute_query(f"INSERT INTO DAILY VALUES ({proj.database_id}, '{date}', {len(cves_news)}, {len(cves_missing)}, {len(cves_updated)}, {len(cves_equals)});");
+            if success:
+                db.commit()
+                
+            log.info(f"Stats from {proj}: {len(cves_updated)} updated vulnerabilities, {len(cves_news)} new vulnerabilities, {len(cves_missing)} deleted vulnerabilities and {len(cves_equals)} equal vulnerabilities.")
+            log.info(f"{proj.short_name} done!")
 
-if __name__ == '__main__':
+if __name__ == '__main__':    
     if len(sys.argv) == 1:
         main("")
     else:

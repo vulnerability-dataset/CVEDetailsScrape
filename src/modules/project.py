@@ -11,6 +11,7 @@ import random
 import re
 import sys
 import time
+from datetime import date
 from collections import defaultdict, namedtuple
 from typing import Callable, Iterator, List, Optional, Tuple, Union
 
@@ -65,7 +66,7 @@ class Project:
 	index_list_vendor_product: int
 	include_directory_path: Optional[str]
 
-	SOURCE_FILE_EXTENSIONS: list = ['c', 'cpp', 'cc', 'cxx', 'c++', 'cp', 'h', 'hpp', 'hh', 'hxx', 'java']
+	SOURCE_FILE_EXTENSIONS: list = ['c', 'cpp', 'cc', 'cxx', 'c++', 'cp', 'h', 'hpp', 'hh', 'hxx', 'java', 'py']
 	SOURCE_FILE_EXTENSIONS_WITH_WILDCARDS: list = ['*.' + extension for extension in SOURCE_FILE_EXTENSIONS] 
 
 	repository: git.Repo
@@ -183,9 +184,9 @@ class Project:
 		# Quando o input for None queremos todas as CVEs simples
 		if input_file == None:
 			all_files_needed = list()   
-			help = os.listdir(latest_subdir)
+			help_ = os.listdir(latest_subdir)
 				
-			for d in help:
+			for d in help_:
 				file_found = os.path.join(latest_subdir, d)
 				if "novas" in d or "atualizadas" in file_found:
 					all_files_needed.append(file_found)
@@ -209,14 +210,16 @@ class Project:
 	def find_output_csv_files(self, prefix: str, subdirectory: Optional[str] = None, sort_key: Optional[Callable] = None) -> List[str]:
 		""" Finds the paths to any CSV files that belong to this project by looking at their prefix. """
   
-		csv_path = self.output_directory_path
+		# csv_path = self.output_directory_path
+		csv_path = "/media/sda1/Projeto_Vulnerabilidades/VulnerabilidadesWork/output/diff_between_files/glibc_2024-06-10/"
   
 		if subdirectory is not None:
 			csv_path = os.path.join(csv_path, subdirectory)
    
-		csv_path = os.path.join(csv_path, fr'{prefix}*-{self.database_id}-{self.short_name}-*')
-		csv_file_list = glob.glob(csv_path)
+		csv_path = os.path.join(csv_path, fr'{prefix}')#*-{self.database_id}-{self.short_name}-*')
+		csv_file_list = glob.glob(os.path.join(csv_path, "*"))
 		csv_file_list = sorted(csv_file_list, key=sort_key)
+  
   
 		return csv_file_list
  
@@ -224,6 +227,31 @@ class Project:
 		""" Creates a subdirectory in the project's output directory. """
 		path = os.path.join(self.output_directory_path, subdirectory)
 		os.makedirs(path, exist_ok=True)
+  
+	def create_diff_subdirectory(self) -> str:
+		""" Creates a subdirectory of diffs in output directory. """
+		file = self.short_name + '_' + str(date.today())
+		path = os.path.join(self.output_directory_diff_path, file)
+		os.makedirs(path, exist_ok=True)
+		return path
+  
+	def find_diff_file(self, type_: str) -> str:
+		""" Returns a file of diffs in output directory (novas, desaparecidas, iguais, atualizadas)."""
+		files = os.path.join(self.output_directory_diff_path, fr'{self.short_name}_{20}*')
+		files_list = glob.glob(files)
+		files_list = sorted(files_list)
+		path = os.path.join(files_list[-1], f'{self.short_name}_{type_}.csv')
+		return path
+
+	def find_affected_file_from_diff_directory(self) -> str:
+		""" Returns a file of diffs in output directory (novas, desaparecidas, iguais, atualizadas)."""
+		files = os.path.join(self.output_directory_diff_path, fr'{self.short_name}_{20}*')
+		files_list = glob.glob(files)
+		files_list = sorted(files_list)
+		path = os.path.join(files_list[-1], f'affected-files.csv')
+		if not os.path.exists(path):
+			return None
+		return path
 
 	####################################################################################################
 

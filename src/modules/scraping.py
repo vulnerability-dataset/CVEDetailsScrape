@@ -122,6 +122,8 @@ class ScrapingRegex():
 	GIT_COMMIT_HASH_LENGTH = 40
 	GIT_COMMIT_HASH: Pattern = re.compile(r'([A-Fa-f0-9]{40})', re.IGNORECASE)
 	SVN_REVISION_NUMBER: Pattern = re.compile(r'(\d+)', re.IGNORECASE)
+ 
+	DJANGO_GIT = re.compile(r'https://www\.djangoproject\.com/weblog/*', re.IGNORECASE)
 
 	"""
 	Examples:
@@ -132,6 +134,8 @@ class ScrapingRegex():
 	- Apache: https://github.com/apache/httpd/commit/e427c41257957b57036d5a549b260b6185d1dd73 
 
 	- Apache: http://svn.apache.org/viewcvs?rev=292949&view=rev
+ 
+	- Django: https://www.djangoproject.com/weblog/2023/sep/04/security-releases/
 	"""
 
 	GIT_DIFF_LINE_NUMBERS: Pattern = re.compile(r'^@@ -(?P<from_begin>\d+)(,(?P<from_total>\d+))? \+(?P<to_begin>\d+)(,(?P<to_total>\d+))? @@.*')

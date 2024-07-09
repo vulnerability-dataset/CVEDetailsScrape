@@ -58,7 +58,9 @@ def main(project_to_analizys: str):
 		input_csv_path, output = project.find_last_diff_cves(project.output_directory_diff_path, project, INPUT, OUTPUT)
 	
 		log.info(f'Creating the file timeline for the project "{project}" using the information in "{input_csv_path}".')
+  
 		if output == None:
+			log.info(f'Nothing to do.')
 			continue
 		
 		# Read the files

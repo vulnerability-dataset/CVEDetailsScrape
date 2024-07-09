@@ -181,6 +181,20 @@
 			"master_branch": "5.13",
 			"language": "java",
 			"include_directory_path": null
+		},
+
+		"Djangoproject":
+		{
+			"short_name": "django",
+			"database_id": 16,
+			"database_name": "django",
+			"github_data_name": "django",
+			"vendor_id": [10199],
+			"product_id": [null],
+			"url_pattern": "djangoproject",
+			"master_branch": "main",
+			"language": "python",
+			"include_directory_path": null
 		}
 	},
 

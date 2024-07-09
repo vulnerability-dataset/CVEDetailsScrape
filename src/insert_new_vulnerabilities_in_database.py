@@ -50,6 +50,7 @@ def cwes_treatment(row: pd.Series, db: Database) -> None:
 	if success and db.cursor.rowcount > 0:
 		resultado = db.cursor.fetchall()
 		cve_id = int(resultado[0]["V_ID"])
+		success, _ = db.execute_query('DELETE FROM VULNERABILITIES_CWE WHERE V_ID = %(v_id)s;', params={'v_id': cve_id})
 
 		# Build the list of cwes and insert all
 		lista_cwes = string_values_to_list_values(row['CWE'])
@@ -90,6 +91,7 @@ def vectores_treatement(row: pd.Series, db: Database) -> None:
     if success and db.cursor.rowcount > 0:
         resultado = db.cursor.fetchall()
         cve_id = int(resultado[0]["V_ID"])
+        success, _ = db.execute_query('DELETE FROM VETORES WHERE V_ID = %(v_id)s;', params={'v_id': cve_id})
         
         # Build the list of cvss_ratings and insert all the vectors (each vector have one cvss_rating)
         cvss_ratings = calculate_cvss_rating(row['CVSS Score'])
@@ -131,128 +133,106 @@ def main(project_to_analizys: str) -> None:
 				continue	
 			
 			# Create the input paths
-			inputs_csv, _ = project.find_last_diff_cves(project.output_directory_diff_path, project, INPUT, OUTPUT, False)
-			for input_csv_path in inputs_csv:
+			inputs_csv = project.find_diff_file('novas')
 		
-				if "novas" not in input_csv_path:
-					continue
+			log.info(f'Inserting the vulnerabilities for the project "{project}" using the information in "{inputs_csv}".')
+
+			vulnerabilities = pd.read_csv(inputs_csv, dtype=str)
+			vulnerabilities = vulnerabilities.replace({np.nan: None})
+
+			# Iterate for each row 
+			for _, row in vulnerabilities.iterrows():
 				
-				log.info(f'Inserting the vulnerabilities for the project "{project}" using the information in "{input_csv_path}".')
+				# Search if there is already an entry for this cve
+				cve = row['CVE']
+				
+				vulnerability_types = deserialize_json_container(row['Vulnerability Types'], [])
+				classification = ''.join(['>' + type + '<' for type in vulnerability_types]) if vulnerability_types else 'Undefined'
+		
+				advisory_id_list = cast(list, deserialize_json_container(row['Advisory IDs'], [None]))
+				bugzilla_url_list = cast(list, deserialize_json_container(row['Bugzilla URLs'], [None]))
+	
 
-				vulnerabilities = pd.read_csv(input_csv_path, dtype=str)
-				vulnerabilities = vulnerabilities.replace({np.nan: None})
+				insert: bool = False
+				sucess, _ = db.execute_query(f'SELECT V_ID from VULNERABILITIES WHERE CVE = "{cve}"')
+				if sucess:
+					num_cves_in_database = db.cursor.rowcount
+					num_vulnerabilities_to_update = num_cves_in_database
+					if num_cves_in_database > 0:
+						resultados = db.cursor.fetchall()
 
-				# Iterate for each row 
-				for _, row in vulnerabilities.iterrows():
-					
-					# Search if there is already an entry for this cve
-					cve = row['CVE']
-					success, error_code = db.execute_query('SELECT * FROM VULNERABILITIES WHERE CVE = %(CVE)s;', params={'CVE': cve})
-					if success and db.cursor.rowcount > 0:
-						log.info(f'CVE {cve} was already in database, removing all data from it.')
-      
-						# We have to delete everything for every table
-						resultado = db.cursor.fetchall()
-						for ids in resultado:
-							cve_id = int(ids["V_ID"])
-      
-							# Remove everything from every possible tables 
-							success, error_code = db.execute_query(f'DELETE FROM VETORES WHERE V_ID = {cve_id};')
-							success, error_code = db.execute_query(f'DELETE FROM VULNERABILITIES_CWE WHERE V_ID = {cve_id};')
-       
-							# Try to remove from patches
-							success, error_code = db.execute_query(f'DELETE FROM PATCHES WHERE V_ID = {cve_id};')
-							if not success:
-								log.info('Cannot delete PACTHES, updating missing column.')
-								
-							db.commit()
-					
-					vulnerability_types = deserialize_json_container(row['Vulnerability Types'], [])
-					classification = ''.join(['>' + type + '<' for type in vulnerability_types]) if vulnerability_types else 'Undefined'
-			
-					advisory_id_list = cast(list, deserialize_json_container(row['Advisory IDs'], [None]))
-					bugzilla_url_list = cast(list, deserialize_json_container(row['Bugzilla URLs'], [None]))
-     
+				for advisory_id in advisory_id_list:
 
-					insert: bool = False
-					sucess, _ = db.execute_query(f'SELECT V_ID from VULNERABILITIES WHERE CVE = "{cve}"')
-					if sucess:
-						num_cves_in_database = db.cursor.rowcount
-						num_vulnerabilities_to_update = num_cves_in_database
-						if num_cves_in_database > 0:
-							resultados = db.cursor.fetchall()
+					# Format advisory IDs depending on the project:
+					# - Mozilla: IDs like "MFSA-2013-49" should be formatted as "mfsa2013-49".
+					# - Xen: IDs like "XSA-99" are already formatted correctly.
+					if advisory_id is not None and project.short_name == 'mozilla':
+						mfsa, remainder = advisory_id.split('-', 1)
+						advisory_id = mfsa.lower() + remainder
 
-					for advisory_id in advisory_id_list:
-
-						# Format advisory IDs depending on the project:
-						# - Mozilla: IDs like "MFSA-2013-49" should be formatted as "mfsa2013-49".
-						# - Xen: IDs like "XSA-99" are already formatted correctly.
-						if advisory_id is not None and project.short_name == 'mozilla':
-							mfsa, remainder = advisory_id.split('-', 1)
-							advisory_id = mfsa.lower() + remainder
-
-						for bugzilla_url in bugzilla_url_list:
-							
-							# While we have entries on the database to update we update and do not insert
-							if num_vulnerabilities_to_update > 0:
-								v_id = resultados[num_cves_in_database - num_vulnerabilities_to_update]['V_ID']
-								success, error_code = db.execute_query('''
-																		UPDATE VULNERABILITIES SET ID_ADVISORIES = %(ID_ADVISORIES)s, V_CLASSIFICATION = %(V_CLASSIFICATION)s, VULNERABILITY_URL = %(VULNERABILITY_URL)s
-																		WHERE V_ID = %(V_ID)s;
-																		''',     
-																		params={
-																		'V_ID': v_id,
+					for bugzilla_url in bugzilla_url_list:
+						
+						# While we have entries on the database to update we update and do not insert
+						if num_vulnerabilities_to_update > 0:
+							v_id = resultados[num_cves_in_database - num_vulnerabilities_to_update]['V_ID']
+							success, error_code = db.execute_query('''
+																	UPDATE VULNERABILITIES SET ID_ADVISORIES = %(ID_ADVISORIES)s, V_CLASSIFICATION = %(V_CLASSIFICATION)s, VULNERABILITY_URL = %(VULNERABILITY_URL)s, MISSING = NULL
+																	WHERE V_ID = %(V_ID)s;
+																	''',     
+																	params={
+																	'V_ID': v_id,
+																	'ID_ADVISORIES': advisory_id,
+																	'V_CLASSIFICATION': classification,
+																	'VULNERABILITY_URL': bugzilla_url,
+																	})
+							num_vulnerabilities_to_update -= 1
+						
+						# When the entries are all updated or does not exist, we just insert
+						else:
+							print("Criei")
+							success, error_code = db.execute_query(	'''
+																	INSERT INTO VULNERABILITIES
+																	(
+																		R_ID, CVE,
+																		ID_ADVISORIES, V_CLASSIFICATION,
+																		VULNERABILITY_URL
+																	)
+																	VALUES
+																	(
+																		%(R_ID)s, %(CVE)s,
+																		%(ID_ADVISORIES)s, %(V_CLASSIFICATION)s,
+																		%(VULNERABILITY_URL)s
+																	);
+																	''',
+																	
+																	params={
+																		'R_ID': project.database_id,
+																		'CVE': cve,
 																		'ID_ADVISORIES': advisory_id,
 																		'V_CLASSIFICATION': classification,
 																		'VULNERABILITY_URL': bugzilla_url,
-																		})
-								num_vulnerabilities_to_update -= 1
-							
-							# When the entries are all updated or does not exist, we just insert
-							else:
-								success, error_code = db.execute_query(	'''
-																		INSERT INTO VULNERABILITIES
-																		(
-																			R_ID, CVE,
-																			ID_ADVISORIES, V_CLASSIFICATION,
-																			VULNERABILITY_URL
-																		)
-																		VALUES
-																		(
-																			%(R_ID)s, %(CVE)s,
-																			%(ID_ADVISORIES)s, %(V_CLASSIFICATION)s,
-																			%(VULNERABILITY_URL)s
-																		);
-																		''',
-																		
-																		params={
-																			'R_ID': project.database_id,
-																			'CVE': cve,
-																			'ID_ADVISORIES': advisory_id,
-																			'V_CLASSIFICATION': classification,
-																			'VULNERABILITY_URL': bugzilla_url,
-																		}
-																	)
-        
-							# If we insert at least one, we have to insert the vectores and cwes than
-							if success:
-								insert = True
-							else:
-								log.error(f'Failed to insert the {cve} for the project "{project}" ({advisory_id}, {bugzilla_url}) with the error code {error_code}.')
+																	}
+																)
+	
+						# If we insert at least one, we have to insert the vectores and cwes than
+						if success:
+							insert = True
+						else:
+							log.error(f'Failed to insert the {cve} for the project "{project}" ({advisory_id}, {bugzilla_url}) with the error code {error_code}.')
 
-					# When exist some entries left, we just remove them
-					if num_vulnerabilities_to_update > 0:
-						while num_vulnerabilities_to_update > 0:
-							v_id = resultados[num_cves_in_database - num_vulnerabilities_to_update]['V_ID']
-							success, error_code = db.execute_query(f'DELETE FROM VULNERABILITIES WHERE V_ID = {v_id};')
-							num_vulnerabilities_to_update -= 1
+				# When exist some entries left, we just remove them
+				if num_vulnerabilities_to_update > 0:
+					while num_vulnerabilities_to_update > 0:
+						v_id = resultados[num_cves_in_database - num_vulnerabilities_to_update]['V_ID']
+						success, error_code = db.execute_query(f'UPDATE VULNERABILITIES SET MISSING = "Not Used" WHERE V_ID = {v_id};')
+						num_vulnerabilities_to_update -= 1
 
-					# Now we insert everything about vectores and cwes
-					if insert:
-						log.info(f'Inserted the {cve} (ID {db.cursor.lastrowid}) for the project "{project}".')
-						db.commit()
-						vectores_treatement(row, db)
-						cwes_treatment(row, db)
+				# Now we insert everything about vectores and cwes
+				if insert:
+					log.info(f'Inserted the {cve} (ID {db.cursor.lastrowid}) for the project "{project}".')
+					db.commit()
+					vectores_treatement(row, db)
+					cwes_treatment(row, db)
 
 		##################################################
 

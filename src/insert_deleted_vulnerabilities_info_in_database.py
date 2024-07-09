@@ -40,7 +40,7 @@ def search_for_reason(cve: str) -> str:
 
     # If it is None, the field was removed
     if products_table is None:
-        return "Doesn't have Affected Product"
+        return "Does not have Affected Product"
         
     else:
         # Search if there is one or more entries
@@ -50,7 +50,7 @@ def search_for_reason(cve: str) -> str:
         if len(products_table) >= 1:
             return "Change Affected Product"
                 
-    return "Doesn't have Affected Product"
+    return "Does not have Affected Product"
 
 def main(project_to_analizys: str) -> None: 
     '''
@@ -78,47 +78,42 @@ def main(project_to_analizys: str) -> None:
                 continue		
             
             # Create the input paths
-            inputs_csv, _ = project.find_last_diff_cves(project.output_directory_diff_path, project, INPUT, OUTPUT, True)
+            inputs_csv = project.find_diff_file('desaparecidas')
+            
+            log.info(f'Inserting the deleted info vulnerabilities for the project "{project}" using the information in "{inputs_csv}".')
 
-            for input_csv_path in inputs_csv:
-        
-                if "desaparecidas" not in input_csv_path:
-                    continue                    
+            vulnerabilities = pd.read_csv(inputs_csv, dtype=str)
+            vulnerabilities = vulnerabilities.replace({np.nan: None})
 
-                log.info(f'Inserting the deleted info vulnerabilities for the project "{project}" using the information in "{input_csv_path}".')
-
-                vulnerabilities = pd.read_csv(input_csv_path, dtype=str)
-                vulnerabilities = vulnerabilities.replace({np.nan: None})
-
-                # Iterate for each row
-                for _, row in vulnerabilities.iterrows():
-                    
-                    # Search for entries for that cve
-                    cve = row['CVE']
-                    success, _ = db.execute_query('SELECT * FROM VULNERABILITIES WHERE CVE = %(CVE)s;', params={'CVE': cve})
-        
-                    # The cve does not exists
-                    if success and db.cursor.rowcount == 0:
-                        log.info(f'CVE {cve} is not in database.')
-                        continue
-                    
-                    # Search for the reason
-                    razao: str = search_for_reason(row['CVE URL'])
-                    resultado = db.cursor.fetchall()
-                    
-                    # For all entries in database we search the id and update the MSSING field
-                    for cves in resultado:
-                        cve_a_atualizar = cves["CVE"]
-                        success, _ = db.execute_query(	'''
-                                                            UPDATE VULNERABILITIES SET MISSING = %(RAZAO)s
-                                                            WHERE CVE = %(CVE)s;
-                                                            ''',     
-                                                            params={
-                                                            'RAZAO': razao,
-                                                            'CVE': cve_a_atualizar
-                                                            })
-                        if success:
-                            log.info(f'Deleted {cve_a_atualizar} with reason {razao}!')
+            # Iterate for each row
+            for _, row in vulnerabilities.iterrows():
+                
+                # Search for entries for that cve
+                cve = row['CVE']
+                success, _ = db.execute_query('SELECT * FROM VULNERABILITIES WHERE CVE = %(CVE)s;', params={'CVE': cve})
+    
+                # The cve does not exists
+                if success and db.cursor.rowcount == 0:
+                    log.info(f'CVE {cve} is not in database.')
+                    continue
+                
+                # Search for the reason
+                razao: str = search_for_reason(row['CVE URL'])
+                resultado = db.cursor.fetchall()
+                
+                # For all entries in database we search the id and update the MSSING field
+                for cves in resultado:
+                    cve_a_atualizar = cves["CVE"]
+                    success, _ = db.execute_query(	'''
+                                                        UPDATE VULNERABILITIES SET MISSING = %(RAZAO)s
+                                                        WHERE CVE = %(CVE)s;
+                                                        ''',     
+                                                        params={
+                                                        'RAZAO': razao,
+                                                        'CVE': cve_a_atualizar
+                                                        })
+                    if success:
+                        log.info(f'Deleted {cve_a_atualizar} with reason {razao}!')
 
         log.info('Committing changes.')
         db.commit()
