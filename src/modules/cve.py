@@ -363,11 +363,14 @@ class Cve:
 				""" Gets a specific cell value and any URL it references from the current row given its column name.. """
 
 				if num != None:
-					info = product_index.find_all('a')[num]
-					value = info.get_text(strip=True)
-					url = product_index.find_all('a', href=True)[num]
-				else:
 					try:
+						info = product_index.find_all('a')[num]
+						value = info.get_text(strip=True)
+						url = product_index.find_all('a', href=True)[num]
+					except:
+						return None, None
+				else:
+					try:	
 						info = product_index.find('div').get_text(strip=True).split(':')[1]
 						value = info
 					except:
@@ -409,12 +412,6 @@ class Cve:
 		<div style="overflow-x: scroll">
 			<ul class="list-group rounded-0">
 				<li class="list-group-item border-0 border-top list-group-item-action">
-					<a title="Open reference url in new window - External link" href="https://security.netapp.com/advisory/ntap-20230302-0010/" rel="noopener nofollow" class="ssc-ext-link">https://security.netapp.com/advisory/ntap-20230302-0010/</a>
-					<div class="d-flex row">
-						<div class="col-lg-8 py-1 ps-4">
-							<div>
-								CVE-2023-25139 GNU C Library (glibc) Vulnerability in NetApp Products | NetApp Product Security						
-							</div>
 							<div class="ssc-text-secondary d-inline-block pe-4"></div>
 						</div>
 						<div class="col-lg-4 text-end py-1 ssc-small"></div>
@@ -614,3 +611,9 @@ class Cve:
 
 if __name__ == '__main__':
 	pass
+#!/usr/bin/env python3
+
+"""
+#!/usr/bin/env python3
+
+"""

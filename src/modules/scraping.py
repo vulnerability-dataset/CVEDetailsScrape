@@ -40,7 +40,7 @@ class ScrapingManager():
 		
 		session = requests.Session()
 		adapter = requests.adapters.HTTPAdapter(max_retries=max_retries)
-	
+
 		if isinstance(url_prefixes, str):
 			url_prefixes = [url_prefixes]
 
